@@ -1,0 +1,11 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ModMetaData>
+  <name>FrameRateControl</name>
+  <author>notfood</author>
+  <targetVersion>1.0.2059</targetVersion>
+  <description>Also know as:
+    - Don't melt my GPU
+    - Don't eat my battery
+    
+  Disables VSync and allows you to control the max FPS</description>
+</ModMetaData>
