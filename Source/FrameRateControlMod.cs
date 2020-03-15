@@ -14,9 +14,10 @@ namespace FrameRateControl
             GetSettings<Settings>();
 
             QualitySettings.vSyncCount = 0;
-            Application.targetFrameRate = (int) Settings.targetFrameRate;
 
             Settings.throttlingAvailable = TryToEnableThrottling();
+
+            Settings.Apply();
         }
 
         bool TryToEnableThrottling()
@@ -84,13 +85,13 @@ namespace FrameRateControl
         public static float targetFrameRate = 60;
         public static float targetSleepTime;
 
-        public static bool throttle = true;
+        public static bool throttle;
         public static bool throttlingAvailable;
 
         public override void ExposeData()
         {
             Scribe_Values.Look(ref targetFrameRate, "targetFrameRate", 60);
-            Scribe_Values.Look(ref throttle, "throttle", true);
+            Scribe_Values.Look(ref throttle, "throttle", false);
         }
 
         public static void DoSettingsWindowContents(Rect inRect)
@@ -102,13 +103,27 @@ namespace FrameRateControl
             list.Begin(inRect);
             list.Label("Target Frame Rate:" + (Application.targetFrameRate == 0 ? "No Limit" : Application.targetFrameRate.ToString()), -1, "Default 60");
             targetFrameRate = list.Slider(targetFrameRate, 0f, 300f);
-            if (throttlingAvailable) {
+            if (throttlingAvailable && targetFrameRate > 0 && targetFrameRate <= 60) {
                 list.CheckboxLabeled("Throttle Engine", ref throttle, "");
             }
             list.End();
 
-            Application.targetFrameRate = (int) ((targetFrameRate + 2.5) / 5) * 5;
-            targetSleepTime = 1000f / Application.targetFrameRate;
+            Apply();
+        }
+
+        public static void Apply()
+        {
+            if (targetFrameRate <= 0 || targetFrameRate >= 300) {
+                targetFrameRate = Application.targetFrameRate = 0;
+            } else {
+                Application.targetFrameRate = (int) ((targetFrameRate + 2.5) / 5) * 5;
+            }
+
+            if (Application.targetFrameRate > 0 && Application.targetFrameRate <= 60) {
+                targetSleepTime = (1000f / Application.targetFrameRate) - 1;
+            } else {
+                targetSleepTime = 22f;
+            }
         }
     }
 }

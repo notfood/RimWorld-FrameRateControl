@@ -10,5 +10,9 @@
     - Don't melt my GPU
     - Don't eat my battery
     
-  Disables VSync and allows you to control the max FPS</description>
+  Disables VSync and allows you to control the max FPS
+  
+Special Thanks:
+    - Bar0th for Engine Throttling feature
+  </description>
 </ModMetaData>
