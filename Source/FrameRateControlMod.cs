@@ -15,65 +15,7 @@ namespace FrameRateControl
 
             QualitySettings.vSyncCount = 0;
 
-            Settings.throttlingAvailable = TryToEnableThrottling();
-
             Settings.Apply();
-        }
-
-        bool TryToEnableThrottling()
-        {
-            var mod = LoadedModManager.RunningMods.FirstOrDefault(m => m.PackageId == "brrainz.harmony");
-            if (mod == null) {
-                return false;
-            }
-
-            void wrapperForSafety()
-            {
-                var harmony = new HarmonyLib.Harmony(Content.PackageId);
-                {
-                    var target = HarmonyLib.AccessTools.Method(typeof(RealTime), nameof(RealTime.Update));
-                    var postfix = HarmonyLib.AccessTools.Method(typeof(FrameRateControlMod), nameof(ThrottleEngine));
-
-                    harmony.Patch(target, postfix: new HarmonyLib.HarmonyMethod(postfix));
-                }
-                {
-                    var target = HarmonyLib.AccessTools.Method(typeof(TickManager), nameof(TickManager.DoSingleTick));
-                    var postfix = HarmonyLib.AccessTools.Method(typeof(FrameRateControlMod), nameof(SetWorstAllowedFPS));
-
-                    harmony.Patch(target, postfix: new HarmonyLib.HarmonyMethod(postfix));
-                }
-            };
-
-            try {
-                wrapperForSafety();
-            } catch (Exception e) {
-                Log.Warning("FrameRateControl :: Despite HarmonyMod being loaded we can't patch, something went very wrong...\n" + e);
-                return false;
-            }
-
-            return true;
-        }
-
-        static void ThrottleEngine()
-        {
-            if (!Settings.throttle) {
-                return;
-            }
-
-            int snooze = (int) (Settings.targetSleepTime - Time.deltaTime);
-            if (snooze > 0) {
-                System.Threading.Thread.Sleep(snooze);
-            }
-        }
-
-        static void SetWorstAllowedFPS(ref float ___WorstAllowedFPS)
-        {
-            if (Settings.throttle) {
-                ___WorstAllowedFPS = Settings.targetFrameRate;
-            } else {
-                ___WorstAllowedFPS = 22f;
-            }
-
         }
 
         public override string SettingsCategory() => "Frame Rate Control";
@@ -83,15 +25,10 @@ namespace FrameRateControl
     class Settings : ModSettings
     {
         public static float targetFrameRate = 60;
-        public static float targetSleepTime;
-
-        public static bool throttle;
-        public static bool throttlingAvailable;
 
         public override void ExposeData()
         {
             Scribe_Values.Look(ref targetFrameRate, "targetFrameRate", 60);
-            Scribe_Values.Look(ref throttle, "throttle", false);
         }
 
         public static void DoSettingsWindowContents(Rect inRect)
@@ -103,9 +40,6 @@ namespace FrameRateControl
             list.Begin(inRect);
             list.Label("Target Frame Rate:" + (Application.targetFrameRate == 0 ? "No Limit" : Application.targetFrameRate.ToString()), -1, "Default 60");
             targetFrameRate = list.Slider(targetFrameRate, 0f, 300f);
-            if (throttlingAvailable && targetFrameRate > 0 && targetFrameRate <= 60) {
-                list.CheckboxLabeled("Throttle Engine", ref throttle, "");
-            }
             list.End();
 
             Apply();
@@ -117,12 +51,6 @@ namespace FrameRateControl
                 targetFrameRate = Application.targetFrameRate = 0;
             } else {
                 Application.targetFrameRate = (int) ((targetFrameRate + 2.5) / 5) * 5;
-            }
-
-            if (Application.targetFrameRate > 0 && Application.targetFrameRate <= 60) {
-                targetSleepTime = (1000f / Application.targetFrameRate) - 1;
-            } else {
-                targetSleepTime = 22f;
             }
         }
     }
