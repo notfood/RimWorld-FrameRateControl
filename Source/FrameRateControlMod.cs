@@ -35,7 +35,7 @@ namespace FrameRateControl
             };
 
             list.Begin(inRect);
-            list.Label("Target Frame Rate:" + (Application.targetFrameRate == 0 ? "No Limit" : Application.targetFrameRate.ToString()), -1, "Default 60");
+            list.Label("Target Frame Rate:" + (Application.targetFrameRate == 0 ? "No Limit" : Application.targetFrameRate.ToString()), tooltip: "Default 60");
             targetFrameRate = list.Slider(targetFrameRate, 0f, 300f);
             list.End();
 
